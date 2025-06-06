@@ -6,6 +6,7 @@ extern "C" {
 #endif
 
 typedef enum {
+    PROFILE_UNSET = -1,
     PROFILE_EASY_TO_READ,
     PROFILE_EASY_TO_SPEAK,
     PROFILE_HARD
@@ -19,12 +20,6 @@ typedef struct {
     int ambiguity;
     int accentuation;
 } Profile;
-
-typedef struct {
-    int length;
-    Profile profile;
-    int copy_to_clipboard;
-} GeneratePasswordArgs;
 
 const Profile* get_default_profile(ProfileTitle title);
 

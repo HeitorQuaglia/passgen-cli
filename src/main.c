@@ -1,57 +1,62 @@
-#include "generator.h"
-#include "profile.h"
-#include "args.h"
-
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
-#include <ctype.h>
-
-void print_usage();
+#include "args.h"
+#include "profile.h"
+#include "generator.h"
 
 int main(int argc, char *argv[]) {
-   CmdArgs args;
-    int parse_result = parse_args(argc, argv, &args);
-    if (parse_result == 1) {
-        print_usage();
+    CmdArgs args;
+    int res = parse_args(argc, argv, &args);
+
+    // Handle help or error
+    if (res == 1) {
+        if (!args.quiet) print_usage();
         return 0;
     }
-    if (parse_result == -1) {
-        print_usage();
+    if (res == -1) {
+        if (!args.quiet) print_usage();
         return 1;
     }
 
-    const Profile *profile = get_default_profile(args.profile);
+    // ===========================
+    // Escolha do perfil ou charset manual
+    // ===========================
 
-    printf("Password will be generated with length: %d\n", args.length);
-    printf("Selected profile: %s\n",
-        args.profile == PROFILE_EASY_TO_READ ? "easy-to-read" :
-        args.profile == PROFILE_EASY_TO_SPEAK ? "easy-to-speak" : "hard"
-    );
-    printf("Profile config - Uppercase: %d, Lowercase: %d, Numbers: %d, Symbols: %d\n",
-        profile->uppercase, profile->lowercase, profile->numbers, profile->symbols);
+    const Profile *profile = NULL;
+    if (args.profile != PROFILE_UNSET) {
+        profile = get_default_profile(args.profile);
+    } else {
+        // Montar profile custom com as flags manuais
+        Profile custom_profile = {
+            .uppercase = args.uppercase == 1 ? 1 : 0,
+            .lowercase = args.lowercase == 1 ? 1 : 0,
+            .numbers = args.numbers == 1 ? 1 : 0,
+            .symbols = args.symbols == 1 ? 1 : 0,
+            .ambiguity = args.ambiguity == 1 ? 1 : 0,
+            .accentuation = args.accentuation == 1 ? 1 : 0
+        };
+        profile = &custom_profile;
+    }
 
+    // ===========================
+    // Gerar senha
+    // ===========================
     char *password = malloc(args.length + 1);
     if (!password) {
-        fprintf(stderr, "Error: Failed to allocate memory.\n");
+        if (!args.quiet) fprintf(stderr, "Error: Failed to allocate memory.\n");
         return 1;
     }
 
-    if (generate_password(args.length, password) == 0) {
-        printf("Generated password: %s\n", password);
+    // Por enquanto só exemplo: usando apenas lowercase
+    // (Depois: implemente no generator.c o uso do profile)
+    if (generate_simple_password(args.length, password) == 0) {
+        printf("%s\n", password);
     } else {
-        fprintf(stderr, "Error: Failed to generate password.\n");
+        if (!args.quiet) fprintf(stderr, "Error: Failed to generate password.\n");
+        free(password);
+        return 1;
     }
 
     free(password);
-
     return 0;
-}
-
-void print_usage() {
-    printf("Uso: passgen-cli [OPÇÕES]\n");
-    printf("  --help           Mostra esta mensagem de ajuda\n");
-    printf("  --length <N>     Comprimento da senha (8 a 50)\n");
-    printf("\n");
-    printf("Exemplo: passgen-cli --length 16\n");
 }
