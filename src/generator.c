@@ -1,6 +1,7 @@
 #include "generator.h"
 #include <stdlib.h>
 #include <time.h>
+#include <stddef.h>
 
 int generate_password(int length, char *out) {
     if (length <= 0 || !out) return -1;

@@ -11,6 +11,14 @@ typedef struct {
     const char *accented;
 } CharSet;
 
+typedef enum {
+    CHARSET_UPPERCASE,
+    CHARSET_LOWERCASE,
+    CHARSET_NUMBERS,
+    CHARSET_SYMBOLS,
+    CHARSET_TOTAL
+} CharsetType;
+
 #ifdef __cplusplus
 }
 #endif

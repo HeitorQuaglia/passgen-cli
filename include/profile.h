@@ -28,6 +28,8 @@ typedef struct {
 
 const Profile* get_default_profile(ProfileTitle title);
 
+ProfileTitle parse_profile_title(const char *title);
+
 #ifdef __cplusplus
 }
 #endif
