@@ -9,7 +9,7 @@ int main(int argc, char *argv[]) {
     int res = parse_args(argc, argv, &args);
 
     // Handle help or error
-    if (res == 1) {
+    if (res == SHOW_HELP) {
         if (!args.quiet) print_usage();
         return 0;
     }
@@ -23,6 +23,7 @@ int main(int argc, char *argv[]) {
     // ===========================
 
     const Profile *profile = NULL;
+    
     if (args.profile != PROFILE_UNSET) {
         profile = get_default_profile(args.profile);
     } else {
@@ -49,7 +50,7 @@ int main(int argc, char *argv[]) {
 
     // Por enquanto só exemplo: usando apenas lowercase
     // (Depois: implemente no generator.c o uso do profile)
-    if (generate_simple_password(args.length, password) == 0) {
+    if (generate_password(args.length, password) == 0) {
         printf("%s\n", password);
     } else {
         if (!args.quiet) fprintf(stderr, "Error: Failed to generate password.\n");

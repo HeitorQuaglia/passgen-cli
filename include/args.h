@@ -7,6 +7,10 @@
 extern "C" {
 #endif
 
+static int SHOW_HELP = 1;
+static int RESUME_GENERATION = 0;
+static int ERROR_OCCURRED = -1;
+
 typedef struct {
     int length;
     ProfileTitle profile;

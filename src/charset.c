@@ -9,7 +9,7 @@ static const CharSet DEFAULT_CHARSETS[CHARSET_TOTAL] = {
     // CHARSET_NUMBERS
     { "23456789", "01", "" },
     // CHARSET_SYMBOLS
-    { "!@#$%^&*", "`~-_=+[{\\|;:,<.>/?", "" }
+    { "!@#$%^&*?;", "`~-_=+[{\\|:,<.>/", "" }
 };
 
 const CharSet* get_charset(CharsetType type) {

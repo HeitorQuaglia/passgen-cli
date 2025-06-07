@@ -20,28 +20,28 @@ typedef struct {
 int handle_help(int argc, char *argv[], int *i, CmdArgs *args) {
     (void)argc; (void)argv; (void)i;
     args->show_help = 1;
-    return 1;
+    return SHOW_HELP;
 }
 
 int handle_length(int argc, char *argv[], int *i, CmdArgs *args) {
     if (*i + 1 >= argc) {
         fprintf(stderr, "Error: Missing value for %s\n", argv[*i]);
-        return -1;
+        return ERROR_OCCURRED;
     }
     int val = atoi(argv[*i + 1]);
     if (val < 8 || val > 50) {
         fprintf(stderr, "Error: Password length must be between 8 and 50.\n");
-        return -1;
+        return ERROR_OCCURRED;
     }
     args->length = val;
     *i += 1;
-    return 1;
+    return RESUME_GENERATION;
 }
 
 int handle_profile(int argc, char *argv[], int *i, CmdArgs *args) {
     if (*i + 1 >= argc) {
         fprintf(stderr, "Error: Missing profile value for %s\n", argv[*i]);
-        return -1;
+        return ERROR_OCCURRED;
     }
     const char *p = argv[*i + 1];
     if (strcmp(p, "easy-to-read") == 0)
@@ -52,17 +52,17 @@ int handle_profile(int argc, char *argv[], int *i, CmdArgs *args) {
         args->profile = PROFILE_HARD;
     else {
         fprintf(stderr, "Error: Invalid profile '%s'\n", p);
-        return -1;
+        return ERROR_OCCURRED;
     }
     *i += 1;
-    return 1;
+    return RESUME_GENERATION;
 }
 
 #define DEFINE_BOOL_HANDLER(field) \
     int handle_##field(int argc, char *argv[], int *i, CmdArgs *args) { \
         (void)argc; (void)argv; (void)i; \
         args->field = 1; \
-        return 1; \
+        return RESUME_GENERATION; \
     }
 
 DEFINE_BOOL_HANDLER(uppercase)
@@ -112,7 +112,7 @@ int parse_args(int argc, char *argv[], CmdArgs *args) {
         for (const FlagEntry *entry = flag_table; entry->flag_name != NULL; ++entry) {
             if (strcmp(argv[i], entry->flag_name) == 0) {
                 int res = entry->handler(argc, argv, &i, args);
-                if (res < 0) return -1; // erro no handler
+                if (res < 0) return ERROR_OCCURRED; // erro no handler
                 matched = true;
                 break;
             }
@@ -122,7 +122,7 @@ int parse_args(int argc, char *argv[], CmdArgs *args) {
                 fprintf(stderr, "Error: Unknown argument '%s'\n", argv[i]);
             return -1;
         }
-        if (args->show_help) return 1;
+        if (args->show_help) return SHOW_HELP; // se --help foi chamado, retorna imediatamente
     }
 
     return validate(args);
@@ -141,14 +141,14 @@ static int validate(CmdArgs *args) {
     if (args->profile != PROFILE_UNSET && has_manual_flags) {
         if (!args->quiet)
             fprintf(stderr, "Error: Specify a profile OR manual charset options, not both!\n");
-        return -1;
+        return ERROR_OCCURRED;
     }
     if (args->profile == PROFILE_UNSET && !has_manual_flags) {
         if (!args->quiet)
             fprintf(stderr, "Error: No profile or charset option specified!\n");
-        return -1;
+        return ERROR_OCCURRED;
     }
-    return 0;
+    return RESUME_GENERATION;
 }
 
 // =========== USAGE ===========
