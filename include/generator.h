@@ -3,10 +3,11 @@
 #include "profile.h"
 #include "charset.h"
 #ifdef __cplusplus
+
 extern "C" {
 #endif
 
-int generate_password(int length, Profile *profile, char *output);
+int generate_password(int length, const Profile *profile, int use_ambiguous, int use_accented, char *out);
 
 #ifdef __cplusplus
 }
