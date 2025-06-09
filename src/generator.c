@@ -1,8 +1,16 @@
-#include "generator.h"
 #include <stdlib.h>
-#include <time.h>
 #include <stddef.h>
+#include <limits.h>
 #include <string.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/types.h>
+
+#ifdef __linux__
+#include <sys/random.h>
+#endif
+
 
 #define ERROR_OCCURRED -1
 #define SUCCESS 0
@@ -73,10 +81,35 @@ static void build_charset(const Profile *profile, int use_ambiguous, int use_acc
     }
 }
 
-int generate_password(int length, const Profile *profile,
-                      int use_ambiguous, int use_accented,
-                      char *out)
-{
+static int fill_random_bytes(unsigned char *buf, size_t n) {
+#ifdef __linux__
+    size_t total = 0;
+    while (total < n) {
+        ssize_t res = getrandom(buf + total, n - total, 0);
+        if (res < 0) {
+            if (errno == EINTR) continue;
+            break;
+        }
+        total += res;
+    }
+    if (total == n) return SUCCESS;
+#endif
+    int fd = open("/dev/urandom", O_RDONLY);
+    if (fd < 0) return ERROR_OCCURRED;
+    size_t total = 0;
+    while (total < n) {
+        ssize_t rd = read(fd, buf + total, n - total);
+        if (rd <= 0) {
+            close(fd);
+            return ERROR_OCCURRED;
+        }
+        total += rd;
+    }
+    close(fd);
+    return SUCCESS;
+}
+
+int generate_password(int length, const Profile *profile, int use_ambiguous, int use_accented, char *out) {
     if (length <= 0 || !out || !profile) return ERROR_OCCURRED;
 
     size_t buf_size = calculate_charset_size(profile, use_ambiguous, use_accented);
@@ -92,21 +125,13 @@ int generate_password(int length, const Profile *profile,
         return ERROR_OCCURRED;
     }
 
-    int fd = open("/dev/urandom", O_RDONLY);
-    if (fd < 0) {
-        free(charset);
-        return ERROR_OCCURRED;
-    }
-
     size_t range = (size_t)UCHAR_MAX + 1;                 
     size_t limit = range - (range % charset_len);         
 
     for (int i = 0; i < length; ++i) {
         unsigned char byte;
         do {
-            ssize_t rd = read(fd, &byte, 1);
-            if (rd != 1) {
-                close(fd);
+            if (fill_random_bytes(&byte, 1) != 0) {
                 free(charset);
                 return ERROR_OCCURRED;
             }
@@ -116,7 +141,6 @@ int generate_password(int length, const Profile *profile,
     }
     out[length] = '\0';
 
-    close(fd);
     free(charset);
     return SUCCESS;
 }
