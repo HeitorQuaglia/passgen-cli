@@ -3,8 +3,10 @@
 #include "args.h"
 #include "profile.h"
 #include "generator.h"
+#include "lang.h"
 
 int main(int argc, char *argv[]) {
+    initialize_language(); // Initialize language at the beginning
     CmdArgs args;
     int res = parse_args(argc, argv, &args);
 

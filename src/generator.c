@@ -3,7 +3,7 @@
 #include <time.h>
 #include <stddef.h>
 
-int generate_password(int length, char *out) {
+int generate_password(int length, Profile *profile, char *out) {
     if (length <= 0 || !out) return -1;
 
     const char *letters = "abcdefghijklmnopqrstuvwxyz";

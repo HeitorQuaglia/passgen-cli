@@ -1,4 +1,6 @@
 #include "args.h"
+#include "strings.h"
+#include "lang.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -24,37 +26,53 @@ int handle_help(int argc, char *argv[], int *i, CmdArgs *args) {
 }
 
 int handle_length(int argc, char *argv[], int *i, CmdArgs *args) {
-    if (*i + 1 >= argc) {
-        fprintf(stderr, "Error: Missing value for %s\n", argv[*i]);
-        return ERROR_OCCURRED;
+    const char *value = NULL;
+    // Suporta --length=VAL
+    char *eq = strchr(argv[*i], '=');
+    if (eq) {
+        value = eq + 1;
+    } else {
+        if (*i + 1 >= argc) {
+            // Check if the next argument exists
+            fprintf(stderr, get_string(current_lang, STR_ERROR_ARGS_MISSING_VALUE_FOR_ARG), argv[*i]);
+            return 0;
+        }
+        value = argv[*i + 1];
+        (*i)++;
     }
-    int val = atoi(argv[*i + 1]);
-    if (val < 8 || val > 50) {
-        fprintf(stderr, "Error: Password length must be between 8 and 50.\n");
-        return ERROR_OCCURRED;
+    int length = atoi(value);
+    if (length < 8 || length > 50) {
+        fprintf(stderr, get_string(current_lang, STR_ERROR_ARGS_PASSWORD_LENGTH));
+        return 0;
     }
-    args->length = val;
-    *i += 1;
+    args->length = length;
     return RESUME_GENERATION;
 }
 
 int handle_profile(int argc, char *argv[], int *i, CmdArgs *args) {
-    if (*i + 1 >= argc) {
-        fprintf(stderr, "Error: Missing profile value for %s\n", argv[*i]);
-        return ERROR_OCCURRED;
+    const char *value = NULL;
+    char *eq = strchr(argv[*i], '=');
+    if (eq) {
+        value = eq + 1;
+    } else {
+        if (*i + 1 >= argc) {
+            // Check if the next argument exists
+            fprintf(stderr, get_string(current_lang, STR_ERROR_ARGS_MISSING_PROFILE_VALUE_FOR_ARG), argv[*i]);
+            return 0;
+        }
+        value = argv[*i + 1];
+        (*i)++;
     }
-    const char *p = argv[*i + 1];
-    if (strcmp(p, "easy-to-read") == 0)
+    if (strcmp(value, "easy-to-read") == 0)
         args->profile = PROFILE_EASY_TO_READ;
-    else if (strcmp(p, "easy-to-speak") == 0)
+    else if (strcmp(value, "easy-to-speak") == 0)
         args->profile = PROFILE_EASY_TO_SPEAK;
-    else if (strcmp(p, "hard") == 0)
+    else if (strcmp(value, "hard") == 0)
         args->profile = PROFILE_HARD;
     else {
-        fprintf(stderr, "Error: Invalid profile '%s'\n", p);
-        return ERROR_OCCURRED;
+        fprintf(stderr, get_string(current_lang, STR_ERROR_ARGS_INVALID_PROFILE_VALUE), value);
+        return 0;
     }
-    *i += 1;
     return RESUME_GENERATION;
 }
 
