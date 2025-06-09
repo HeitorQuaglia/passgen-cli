@@ -73,30 +73,50 @@ static void build_charset(const Profile *profile, int use_ambiguous, int use_acc
     }
 }
 
-int generate_password(int length, const Profile *profile, int use_ambiguous, int use_accented, char *out) {
+int generate_password(int length, const Profile *profile,
+                      int use_ambiguous, int use_accented,
+                      char *out)
+{
     if (length <= 0 || !out || !profile) return ERROR_OCCURRED;
 
-    size_t charset_buffer_size = calculate_charset_size(profile, use_ambiguous, use_accented);
-    if (charset_buffer_size <= 1) return ERROR_OCCURRED;
+    size_t buf_size = calculate_charset_size(profile, use_ambiguous, use_accented);
+    if (buf_size <= 1) return ERROR_OCCURRED;
 
-    char *charset = (char *)malloc(charset_buffer_size);
+    char *charset = malloc(buf_size);
     if (!charset) return ERROR_OCCURRED;
 
-    build_charset(profile, use_ambiguous, use_accented, charset, charset_buffer_size);
-
+    build_charset(profile, use_ambiguous, use_accented, charset, buf_size);
     size_t charset_len = strlen(charset);
     if (charset_len == 0) {
         free(charset);
         return ERROR_OCCURRED;
     }
 
-    srand((unsigned int)time(NULL));
+    int fd = open("/dev/urandom", O_RDONLY);
+    if (fd < 0) {
+        free(charset);
+        return ERROR_OCCURRED;
+    }
+
+    size_t range = (size_t)UCHAR_MAX + 1;                 
+    size_t limit = range - (range % charset_len);         
 
     for (int i = 0; i < length; ++i) {
-        out[i] = charset[rand() % charset_len];
+        unsigned char byte;
+        do {
+            ssize_t rd = read(fd, &byte, 1);
+            if (rd != 1) {
+                close(fd);
+                free(charset);
+                return ERROR_OCCURRED;
+            }
+        } while ((size_t)byte >= limit);
+
+        out[i] = charset[byte % charset_len];
     }
     out[length] = '\0';
 
+    close(fd);
     free(charset);
     return SUCCESS;
 }
