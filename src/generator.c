@@ -11,6 +11,10 @@
 #include <sys/random.h>
 #endif
 
+#include "profile.h"
+#include "charset.h"
+#include "generator.h"
+
 
 #define ERROR_OCCURRED -1
 #define SUCCESS 0
@@ -83,16 +87,18 @@ static void build_charset(const Profile *profile, int use_ambiguous, int use_acc
 
 static int fill_random_bytes(unsigned char *buf, size_t n) {
 #ifdef __linux__
-    size_t total = 0;
-    while (total < n) {
-        ssize_t res = getrandom(buf + total, n - total, 0);
-        if (res < 0) {
-            if (errno == EINTR) continue;
-            break;
+    {
+        size_t total = 0;
+        while (total < n) {
+            ssize_t res = getrandom(buf + total, n - total, 0);
+            if (res < 0) {
+                if (errno == EINTR) continue;
+                break;
+            }
+            total += res;
         }
-        total += res;
+        if (total == n) return SUCCESS;
     }
-    if (total == n) return SUCCESS;
 #endif
     int fd = open("/dev/urandom", O_RDONLY);
     if (fd < 0) return ERROR_OCCURRED;
