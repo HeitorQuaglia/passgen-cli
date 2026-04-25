@@ -19,6 +19,8 @@ typedef enum {
     CHARSET_TOTAL
 } CharsetType;
 
+const CharSet *get_charset(CharsetType type);
+
 #ifdef __cplusplus
 }
 #endif
